@@ -1,9 +1,9 @@
 ============================
 SwiftUI for React Developers
 ============================
-This is a cheat sheet that help you React developers to quickly start with SwiftUI.
+This is a cheat sheet that helps you React developers to quickly start with SwiftUI.
 
-.. note:: I assume that you are familiar with React Hooks. For transformation from **Class Components** to **Hooks**, I highly recommend you to visit `Thinking in React Hooks`_, which is a great visualized explanation.
+.. note:: I assume that you are familiar with React Hooks. For the transformation from **Class Components** to **Hooks**, I highly recommend you to visit `Thinking in React Hooks`_, which is a great visualized explanation.
 
 .. contents:: :local:
 
