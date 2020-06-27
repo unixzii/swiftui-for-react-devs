@@ -75,6 +75,54 @@ In SwiftUI:
 
 Almost the same in semantic!
 
+Conditional & List
+------------------
+Structure of the contents can be dynamic, the most common patterns are conditional
+and list.
+
+In React:
+
+.. code-block:: javascript
+
+  const UserList = ({ users }) => {
+    if (!users.length) {
+      return <p>No users</p>;
+    }
+    
+    return (
+      <ul>
+        {users.map(e => (
+          <li key={e.id}>{e.username}</li>
+        ))}
+      </ul>
+    );
+  }
+
+In SwiftUI:
+
+.. code-block:: swift
+
+  struct UserList: View {
+      let users: [User]
+      
+      var body: some View {
+          Group {
+              if users.isEmpty {
+                  Text("No users")
+              } else {
+                  VStack {
+                      ForEach(users, id: \.id) {
+                          Text("\($0.username)")
+                      }
+                  }
+              }
+          }
+      }
+  }
+
+SwiftUI has built-in ``ForEach`` element, you don't need to manually map the data
+array to views, so you can have a much neater code.
+
 Events Handling
 ---------------
 In React:
@@ -580,7 +628,107 @@ struct, pretty like how **Hook** works in React.
 In this way, even though the ``View`` objects are recreated frequently, as long as
 the view is not unmounted, the state will be kept.
 
+How function builders works?
+----------------------------
+As we mention earlier, SwiftUI use **Function Builders** as DSL to let us build
+contents. There is also a draft proposal about it: `Function builders (draft proposal)`_.
+
+Let's first take a look at how JSX is transpiled to JavaScript. We have this:
+
+.. code-block:: javascript
+
+  const UserInfo = ({ users }) => {
+    if (!users.length) {
+      return <p>No users</p>;
+    }
+    
+    return (
+      <div>
+        <p>Great!</p>
+        <p>We have {users.length} users!</p>
+      </div>
+    );
+  }
+
+And this is the output from Babel with ``react`` preset:
+
+.. code-block:: javascript
+
+  const UserInfo = ({
+    users
+  }) => {
+    if (!users.length) {
+      return /*#__PURE__*/React.createElement("p", null, "No users");
+    }
+
+    return /*#__PURE__*/React.createElement("div", null,
+      /*#__PURE__*/React.createElement("p", null, "Great!"),
+      /*#__PURE__*/React.createElement("p", null, "We have ", users.length, " users!")
+    );
+  };
+
+Most of the structure is identical, and the HTML tags are transformed to ``React.createElement``
+calls. That makes sense, the function doesn't produce component instances, instead,
+it produces elements. Elements describe how to configure components or DOM elements.
+
+Now, let's back to SwiftUI. There is the same example:
+
+.. code-block:: swift
+
+  struct UserInfo: View {
+      let users: [User]
+      
+      var body: some View {
+          Group {
+              if users.isEmpty {
+                  Text("No users")
+              } else {
+                  VStack {
+                      Text("Great!")
+                      Text("We have \(users.count) users!")
+                  }
+              }
+          }
+      }
+  }
+
+And this is the actual code represented by it:
+
+.. code-block:: swift
+
+  struct UserInfo: View {
+      let users: [User]
+      
+      var body: some View {
+          let v: _ConditionalContent<Text, VStack<TupleView<(Text, Text)>>>
+          if users.isEmpty {
+              v = ViewBuilder.buildEither(first: Text("No users"))
+          } else {
+              v = ViewBuilder.buildEither(second: VStack {
+                  return ViewBuilder.buildBlock(
+                      Text("Great!"),
+                      Text("We have \(users.count) users!")
+                  )
+              })
+          }
+          return v
+      }
+  }
+
+Voila! All the dynamic structures are replaced by ``ViewBuilder`` method calls. In
+this way, we can use a complex type to represent the structure. Like ``if``
+statement will be transformed to ``ViewBuilder.buildEither`` call, and its return
+value contains the information of both ``if`` block and ``else`` block.
+
+``ViewBuilder.buildBlock`` is used to represent a child element that contains
+multiple views.
+
+With function builders, you can even create your own DSLs. And this year in WWDC20,
+Apple released more features based on function builders, like **WidgetKit** and
+SwiftUI **App Structure**.
+
 .. References:
 
 .. _`Thinking in React Hooks`: https://wattenberger.com/blog/react-hooks
 .. _`[SE-0258] Property Wrappers`: https://github.com/apple/swift-evolution/blob/master/proposals/0258-property-wrappers.md
+.. _`Function builders (draft proposal)`: https://github.com/apple/swift-evolution/blob/9992cf3c11c2d5e0ea20bee98657d93902d5b174/proposals/XXXX-function-builders.md
