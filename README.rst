@@ -727,6 +727,28 @@ With function builders, you can even create your own DSLs. And this year in WWDC
 Apple released more features based on function builders, like **WidgetKit** and
 SwiftUI **App Structure**.
 
+How SwiftUI determine when to update a view?
+--------------------------------------------
+All views in SwiftUI are like **PureComponent** in React by default. That means,
+all the member variables (props) will be used to evaluate the equality, of course
+it's shallow comparison.
+
+What if you want to customize the update strategy? If you take a look at the
+declaration of ``View`` protocol, you will notice this subtle thing:
+
+.. code-block:: swift
+
+  extension View where Self : Equatable {
+
+      /// Prevents the view from updating its child view when its new value is the
+      /// same as its old value.
+      @inlinable public func equatable() -> EquatableView<Self>
+  }
+
+SwiftUI provides an ``EquatableView`` to let you achieve that. All you need to do
+is make your view type conform ``Equatable`` and implement the ``==`` function.
+Then wrap it into ``EquatableView`` at the call-site.
+
 .. References:
 
 .. _`Thinking in React Hooks`: https://wattenberger.com/blog/react-hooks
